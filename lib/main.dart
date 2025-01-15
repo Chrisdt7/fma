@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:fma/templates/AppLocalization.dart';
 import 'package:fma/templates/Themes.dart';
 import 'package:fma/ui/HomePage.dart';
 import 'package:fma/ui/ProfilePage.dart';
@@ -18,10 +20,17 @@ class FMA extends StatefulWidget {
 
 class _FMAState extends State<FMA> {
   bool isDarkMode = false;
+  Locale _currentLocale = const Locale('en');
 
   void toggleTheme() {
     setState(() {
       isDarkMode = !isDarkMode;
+    });
+  }
+
+  void _changeLanguage(String languageCode) {
+    setState(() {
+      _currentLocale = Locale(languageCode);
     });
   }
 
@@ -31,21 +40,41 @@ class _FMAState extends State<FMA> {
       debugShowCheckedModeBanner: false,
       title: 'Financial Managing Apps',
       theme: isDarkMode ? darkTheme : lightTheme,
+      locale: _currentLocale,
+      supportedLocales: const [
+        Locale('en'),
+        Locale('id'),
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       initialRoute: '/login',
       routes: {
         '/login': (context) => Theme(
               data: isDarkMode ? authDarkTheme : authLightTheme,
-              child: LoginPage(toggleTheme: toggleTheme),
+              child: LoginPage(
+                toggleTheme: toggleTheme,
+                changeLanguage: _changeLanguage,
+              ),
             ),
         '/register': (context) => Theme(
               data: isDarkMode ? authDarkTheme : authLightTheme,
-              child: RegisterPage(toggleTheme: toggleTheme),
+              child: RegisterPage(
+                toggleTheme: toggleTheme,
+                changeLanguage: _changeLanguage,
+              ),
             ),
         '/home': (context) => HomePage(toggleTheme: toggleTheme),
         '/transactions': (context) =>
             TransactionsPage(toggleTheme: toggleTheme),
         '/reports': (context) => ReportsPage(toggleTheme: toggleTheme),
-        '/profile': (context) => ProfilePage(toggleTheme: toggleTheme),
+        '/profile': (context) => ProfilePage(
+              toggleTheme: toggleTheme,
+              changeLanguage: _changeLanguage,
+            ),
       },
     );
   }

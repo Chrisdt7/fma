@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:fma/templates/AppLocalization.dart';
+
 class AddTransactionDialog extends StatefulWidget {
   @override
   _AddTransactionDialogState createState() => _AddTransactionDialogState();
@@ -32,7 +34,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
 
   @override
   void dispose() {
-    _timer?.cancel(); // Clean up the timer when the widget is disposed
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -48,11 +50,12 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+    final localizations = AppLocalizations.of(context);
 
     return AlertDialog(
       surfaceTintColor: colorScheme.surface,
       title: Text(
-        'Add Transaction',
+        localizations.translate("AddTransaction-label-title"),
         textAlign: TextAlign.center,
         style: textTheme.titleLarge
             ?.copyWith(color: colorScheme.tertiary.withAlpha(255)),
@@ -65,7 +68,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
             children: [
               TextFormField(
                 decoration: InputDecoration(
-                    labelText: 'Amount',
+                    labelText:
+                        localizations.translate("Transactions-label-amount"),
                     icon: Icon(Icons.attach_money),
                     iconColor: colorScheme.tertiary.withAlpha(200),
                     focusedBorder: UnderlineInputBorder(
@@ -80,7 +84,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                 style: textTheme.titleSmall
                     ?.copyWith(color: colorScheme.tertiary.withAlpha(200)),
                 validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter an amount'
+                    ? localizations.translate("snackbarRequiredAmount")
                     : null,
               ),
               DropdownButtonFormField<String>(
@@ -90,7 +94,8 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                   focusedBorder: UnderlineInputBorder(
                       borderSide: BorderSide(
                           color: colorScheme.tertiary.withAlpha(200))),
-                  labelText: 'Category',
+                  labelText:
+                      localizations.translate("Transactions-label-category"),
                   labelStyle: textTheme.titleMedium?.copyWith(
                     color: colorScheme.tertiary.withAlpha(200),
                   ),
@@ -110,9 +115,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                               color: colorScheme.tertiary.withAlpha(200),
                             ),
                           ),
-                          if (i !=
-                              categories.length -
-                                  0) // Add divider unless it's the last item
+                          if (i != categories.length - 0)
                             Divider(
                               color: colorScheme.tertiary.withAlpha(50),
                               thickness: 1,
@@ -123,8 +126,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                     ),
                 ],
                 onChanged: (value) => _category = value,
-                validator: (value) =>
-                    value == null ? 'Please select a category' : null,
+                validator: (value) => value == null
+                    ? localizations.translate("snackbarRequiredCategory")
+                    : null,
               ),
               SizedBox(
                 height: 10,
@@ -136,7 +140,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                   focusedBorder: UnderlineInputBorder(
                       borderSide: BorderSide(
                           color: colorScheme.tertiary.withAlpha(200))),
-                  labelText: 'Type',
+                  labelText: localizations.translate("Transactions-label-type"),
                   labelStyle: textTheme.titleMedium?.copyWith(
                     color: colorScheme.tertiary.withAlpha(200),
                   ),
@@ -153,17 +157,18 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                           Text(
                             types[i],
                             style: textTheme.titleSmall?.copyWith(
-                              color: types[i] == 'income'
-                                  ? colorScheme.onSecondary // Green for income
-                                  : types[i] == 'expense'
+                              color: types[i] ==
+                                      localizations.translate(
+                                          "Transactions-label-type-a")
+                                  ? colorScheme.onSecondary
+                                  : types[i] ==
+                                          localizations.translate(
+                                              "Transactions-label-type-b")
                                       ? colorScheme.onTertiary
-                                      // Red for expense
                                       : colorScheme.tertiary.withAlpha(200),
                             ),
                           ),
-                          if (i !=
-                              types.length -
-                                  0) // Add divider unless it's the last item
+                          if (i != types.length - 0)
                             Divider(
                               color: colorScheme.tertiary.withAlpha(50),
                               thickness: 1,
@@ -174,8 +179,9 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
                     ),
                 ],
                 onChanged: (value) => _type = value,
-                validator: (value) =>
-                    value == null ? 'Please select a type' : null,
+                validator: (value) => value == null
+                    ? localizations.translate("snackbarRequiredType")
+                    : null,
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 16.0),
@@ -192,7 +198,7 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel',
+          child: Text(localizations.translate("text-cancel"),
               style: textTheme.titleMedium
                   ?.copyWith(color: colorScheme.onTertiary)),
         ),
@@ -201,15 +207,15 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
             if (_formKey.currentState!.validate()) {
               _formKey.currentState!.save();
               Navigator.pop(context, {
-                'amount': _amount,
-                'category': _category,
-                'type': _type,
-                'date': _currentDateTime.toIso8601String(),
+                "amount": _amount,
+                "category": _category,
+                "type": _type,
+                "date": _currentDateTime.toIso8601String(),
               });
             }
           },
           child: Text(
-            'Add',
+            localizations.translate("text-add"),
             style:
                 textTheme.titleMedium?.copyWith(color: colorScheme.onPrimary),
           ),
@@ -219,7 +225,6 @@ class _AddTransactionDialogState extends State<AddTransactionDialog> {
   }
 
   String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.toLocal()}'
-        .split('.')[0]; // Example: 2025-01-01 14:30:00
+    return '${dateTime.toLocal()}'.split('.')[0];
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fma/templates/AppLocalization.dart';
 import 'package:fma/templates/Themes.dart';
 import 'package:fma/templates/CustomAppBar.dart';
 import 'package:fma/templates/CustomBottomNavBar.dart';
@@ -56,19 +57,22 @@ class _ReportsPageState extends State<ReportsPage> {
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to fetch data: $e')),
+        SnackBar(content: Text('Failed to get data: $e')),
       );
     }
   }
 
   Future<void> _exportData() async {
     if (_selectedStartDate == null || _selectedEndDate == null) {
-      _showSnackBar('Please select a date range first!', context);
+      _showSnackBar(
+          AppLocalizations.of(context).translate("snackbarRequiredDate"),
+          context);
       return;
     }
 
     try {
       await _exportService.exportToPDF(
+        context: context,
         income: _income,
         expense: _expense,
         netBalance: _netBalance,
@@ -78,6 +82,7 @@ class _ReportsPageState extends State<ReportsPage> {
       );
 
       await _exportService.exportToExcel(
+        context: context,
         income: _income,
         expense: _expense,
         netBalance: _netBalance,
@@ -86,9 +91,14 @@ class _ReportsPageState extends State<ReportsPage> {
         endDate: _selectedEndDate,
       );
 
-      _showSnackBar('Data Exported Successfully', context, isSuccess: true);
+      _showSnackBar(
+        AppLocalizations.of(context).translate("snackbarSuccessExportData"),
+        context,
+      );
     } catch (e) {
-      _showSnackBar('Failed To Export Data.', context);
+      _showSnackBar(
+          AppLocalizations.of(context).translate("snackbarFailedExportData"),
+          context);
     }
   }
 
@@ -117,9 +127,12 @@ class _ReportsPageState extends State<ReportsPage> {
   Widget build(BuildContext context) {
     final gradientTheme = Theme.of(context).extension<GradientTheme>()!;
     final colorScheme = Theme.of(context).colorScheme;
+    final localizations = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: CustomAppBar(title: 'Reports', toggleTheme: widget.toggleTheme),
+      appBar: CustomAppBar(
+          title: localizations.translate("reports-title"),
+          toggleTheme: widget.toggleTheme),
       body: Stack(
         children: [
           Container(
@@ -146,13 +159,15 @@ class _ReportsPageState extends State<ReportsPage> {
                         children: [
                           Expanded(
                               child: ReportCard(
-                            title: 'Income Report',
+                            title:
+                                localizations.translate("Reports-label-income"),
                             value: '\Rp.${_income.toStringAsFixed(2)},-',
                             valueColor: colorScheme.onSecondary,
                           )),
                           Expanded(
                               child: ReportCard(
-                            title: 'Expense Report',
+                            title: localizations
+                                .translate("Reports-label-expense"),
                             value: '-\Rp.${_expense.toStringAsFixed(2)},-',
                             valueColor: colorScheme.onTertiary,
                           )),
@@ -161,7 +176,8 @@ class _ReportsPageState extends State<ReportsPage> {
                       Container(
                         width: double.maxFinite,
                         child: ReportCard(
-                          title: 'Net Balance',
+                          title:
+                              localizations.translate("Reports-label-balance"),
                           value: '\Rp.${_netBalance.toStringAsFixed(2)},-',
                           valueColor:
                               _netBalance >= 0 ? Colors.green : Colors.red,
@@ -172,7 +188,8 @@ class _ReportsPageState extends State<ReportsPage> {
                         child: ElevatedButton.icon(
                           onPressed: _exportData,
                           icon: Icon(Icons.download),
-                          label: Text('Export Data'),
+                          label: Text(
+                              localizations.translate("Reports-label-export")),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                                 vertical: 12, horizontal: 20),

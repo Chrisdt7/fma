@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fma/services/ApiService.dart';
+import 'package:fma/services/Helpers.dart';
+import 'package:fma/templates/AppLocalization.dart';
 
 Future<void> showEditProfileDialog(
     BuildContext context,
@@ -16,6 +18,7 @@ Future<void> showEditProfileDialog(
   final theme = Theme.of(context);
   final textTheme = theme.textTheme;
   final colorScheme = theme.colorScheme;
+  final localizations = AppLocalizations.of(context);
 
   return showDialog(
     context: context,
@@ -23,7 +26,7 @@ Future<void> showEditProfileDialog(
       return AlertDialog(
         surfaceTintColor: colorScheme.surface,
         title: Text(
-          'Edit Profile',
+          localizations.translate("EditProfile-label-title"),
           textAlign: TextAlign.center,
           style: textTheme.titleLarge
               ?.copyWith(color: colorScheme.tertiary.withAlpha(255)),
@@ -42,9 +45,9 @@ Future<void> showEditProfileDialog(
                         : colorScheme.onSurface,
               ),
               decoration: InputDecoration(
-                labelText: 'Name',
-                hintText: 'Enter your name',
-                icon: Icon(Icons.person),
+                labelText: localizations.translate("label-name"),
+                hintText: localizations.translate("hint-name"),
+                icon: const Icon(Icons.person),
                 iconColor: colorScheme.tertiary.withAlpha(200),
                 border: UnderlineInputBorder(
                   borderSide: BorderSide(color: colorScheme.tertiary),
@@ -57,7 +60,7 @@ Future<void> showEditProfileDialog(
               ),
               autofocus: true,
               validator: (value) => value == null || value.isEmpty
-                  ? 'Please enter your name'
+                  ? localizations.translate("snackbarRequiredName")
                   : null,
             ),
             const SizedBox(height: 16),
@@ -71,9 +74,9 @@ Future<void> showEditProfileDialog(
                         : colorScheme.onSurface,
               ),
               decoration: InputDecoration(
-                labelText: 'Email',
-                hintText: 'Enter your email',
-                icon: Icon(Icons.email),
+                labelText: localizations.translate("label-email"),
+                hintText: localizations.translate("hint-email"),
+                icon: const Icon(Icons.email),
                 iconColor: colorScheme.tertiary.withAlpha(200),
                 border: UnderlineInputBorder(
                   borderSide: BorderSide(color: colorScheme.tertiary),
@@ -87,7 +90,7 @@ Future<void> showEditProfileDialog(
               keyboardType: TextInputType.emailAddress,
               autofocus: true,
               validator: (value) => value == null || value.isEmpty
-                  ? 'Please enter your email'
+                  ? localizations.translate("snackbarRequiredEmail")
                   : null,
             ),
           ],
@@ -95,7 +98,7 @@ Future<void> showEditProfileDialog(
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel',
+            child: Text(localizations.translate("text-cancel"),
                 style: textTheme.titleMedium
                     ?.copyWith(color: colorScheme.onTertiary)),
           ),
@@ -120,19 +123,23 @@ Future<void> showEditProfileDialog(
               }, null);
 
               if (success) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Profile updated successfully')),
+                showSnackBar(
+                  context,
+                  AppLocalizations.of(context)
+                      .translate("snackbarMatchPassword"),
                 );
                 Navigator.of(context).pop();
                 refreshUser();
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Failed to update profile')),
+                showSnackBar(
+                  context,
+                  AppLocalizations.of(context)
+                      .translate("snackbarMatchPassword"),
                 );
               }
             },
             child: Text(
-              'Save',
+              localizations.translate("text-save"),
               style:
                   textTheme.titleMedium?.copyWith(color: colorScheme.onPrimary),
             ),

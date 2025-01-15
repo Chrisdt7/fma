@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:fma/services/Helpers.dart';
+import 'package:fma/templates/AppLocalization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
@@ -8,11 +10,8 @@ class AuthService {
 
     Navigator.of(context)
         .pushNamedAndRemoveUntil('/login', (Route<dynamic> route) => false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Logout Successfully'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    showSnackBar(context,
+        AppLocalizations.of(context).translate("snackbarSuccessLogout"));
+    return;
   }
 }

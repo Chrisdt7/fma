@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fma/services/ApiService.dart';
+import 'package:fma/services/Helpers.dart';
+import 'package:fma/templates/AppLocalization.dart';
 
 Future<void> showChangePasswordDialog(
   BuildContext context,
@@ -17,6 +19,7 @@ Future<void> showChangePasswordDialog(
   final theme = Theme.of(context);
   final textTheme = theme.textTheme;
   final colorScheme = theme.colorScheme;
+  final localizations = AppLocalizations.of(context);
 
   return showDialog(
     context: context,
@@ -31,7 +34,7 @@ Future<void> showChangePasswordDialog(
           return AlertDialog(
             surfaceTintColor: colorScheme.surface,
             title: Text(
-              'Change Password',
+              localizations.translate("ChangePassword-label-title"),
               textAlign: TextAlign.center,
               style: textTheme.titleLarge
                   ?.copyWith(color: colorScheme.tertiary.withAlpha(255)),
@@ -51,8 +54,9 @@ Future<void> showChangePasswordDialog(
                   ),
                   obscureText: !isCurrentPasswordVisible,
                   decoration: InputDecoration(
-                    labelText: 'Current Password',
-                    hintText: 'Enter your old password',
+                    labelText:
+                        localizations.translate("label-current-password"),
+                    hintText: localizations.translate("hint-current-password"),
                     icon: Icon(Icons.lock_outline),
                     iconColor: colorScheme.tertiary.withAlpha(200),
                     border: UnderlineInputBorder(
@@ -79,7 +83,8 @@ Future<void> showChangePasswordDialog(
                   ),
                   autofocus: true,
                   validator: (value) => value == null || value.isEmpty
-                      ? 'Please enter your name'
+                      ? localizations
+                          .translate("snackbarRequiredCurrentPassword")
                       : null,
                 ),
                 const SizedBox(height: 16),
@@ -94,8 +99,8 @@ Future<void> showChangePasswordDialog(
                         : colorScheme.onSurface,
                   ),
                   decoration: InputDecoration(
-                    labelText: 'New Password',
-                    hintText: 'Enter your new password',
+                    labelText: localizations.translate("label-new-password"),
+                    hintText: localizations.translate("hint-new-password"),
                     icon: Icon(Icons.vpn_key_outlined),
                     iconColor: colorScheme.tertiary.withAlpha(200),
                     border: UnderlineInputBorder(
@@ -122,7 +127,7 @@ Future<void> showChangePasswordDialog(
                   ),
                   autofocus: true,
                   validator: (value) => value == null || value.isEmpty
-                      ? 'Please enter your name'
+                      ? localizations.translate("snackbarRequiredNewPassword")
                       : null,
                 ),
                 const SizedBox(height: 16),
@@ -137,8 +142,9 @@ Future<void> showChangePasswordDialog(
                         : colorScheme.onSurface,
                   ),
                   decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    hintText: 'Re-enter your new password',
+                    labelText:
+                        localizations.translate("label-confirm-password"),
+                    hintText: localizations.translate("hint-confirm-password"),
                     icon: Icon(Icons.check_circle_outline),
                     iconColor: colorScheme.tertiary.withAlpha(200),
                     border: UnderlineInputBorder(
@@ -165,7 +171,8 @@ Future<void> showChangePasswordDialog(
                   ),
                   autofocus: true,
                   validator: (value) => value == null || value.isEmpty
-                      ? 'Please enter your name'
+                      ? localizations
+                          .translate("snackbarRequiredConfirmPassword")
                       : null,
                 ),
               ],
@@ -174,7 +181,7 @@ Future<void> showChangePasswordDialog(
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(
-                  'Cancel',
+                  localizations.translate("text-cancel"),
                   style: textTheme.titleMedium
                       ?.copyWith(color: colorScheme.onTertiary),
                 ),
@@ -189,15 +196,19 @@ Future<void> showChangePasswordDialog(
                   if (currentPassword.isEmpty ||
                       newPassword.isEmpty ||
                       confirmPassword.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('All fields are required')),
+                    showSnackBar(
+                      context,
+                      AppLocalizations.of(context)
+                          .translate("snackbarSuccessEditProfile"),
                     );
                     return;
                   }
 
                   if (newPassword != confirmPassword) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Passwords do not match')),
+                    showSnackBar(
+                      context,
+                      AppLocalizations.of(context)
+                          .translate("snackbarFailedEditProfile"),
                     );
                     return;
                   }
@@ -210,21 +221,23 @@ Future<void> showChangePasswordDialog(
                   });
 
                   if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Password changed successfully')),
+                    showSnackBar(
+                      context,
+                      AppLocalizations.of(context)
+                          .translate("snackbarSuccessChangePassword"),
                     );
                     Navigator.of(context).pop();
                     refreshUser();
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Failed to change password')),
+                    showSnackBar(
+                      context,
+                      AppLocalizations.of(context)
+                          .translate("snackbarFailedChangePassword"),
                     );
                   }
                 },
                 child: Text(
-                  'Change Password',
+                  localizations.translate("ChangePassword-label-title"),
                   style: textTheme.titleMedium
                       ?.copyWith(color: colorScheme.onPrimary),
                 ),

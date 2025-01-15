@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:fma/services/Helpers.dart';
+import 'package:fma/templates/AppLocalization.dart';
 import 'package:fma/templates/Themes.dart';
 import 'package:fma/templates/CustomAppBar.dart';
 import 'package:fma/templates/CustomBottomNavBar.dart';
@@ -38,13 +40,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
     try {
       final apiService = ApiService();
       final data = await apiService.getTransactions();
+      print(data);
       setState(() {
         transactions = data;
         isLoading = false;
       });
     } catch (e) {
       setState(() {
-        errorMessage = 'Failed to load transactions. Please try again later.';
+        errorMessage = AppLocalizations.of(context)
+            .translate("snackbarFailedGetTransactions");
         isLoading = false;
       });
     }
@@ -54,10 +58,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final gradientTheme = Theme.of(context).extension<GradientTheme>()!;
+    final localizations = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar:
-          CustomAppBar(title: 'Transactions', toggleTheme: widget.toggleTheme),
+      appBar: CustomAppBar(
+          title: localizations.translate("transactions-title"),
+          toggleTheme: widget.toggleTheme),
       body: Stack(
         children: [
           Container(
@@ -86,14 +92,16 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     : errorMessage.isNotEmpty
                         ? Center(
                             child: Text(errorMessage,
-                                style: TextStyle(color: Colors.red)))
+                                style:
+                                    TextStyle(color: colorScheme.onTertiary)))
                         : ListView.builder(
                             itemCount: transactions.length,
                             itemBuilder: (context, index) {
                               final transaction = transactions[index];
                               return TransactionItem(
                                 type: transaction['type'],
-                                title: 'Transaction ${transaction['id']}',
+                                title:
+                                    '${localizations.translate("transactions-title")} ${index + 1}',
                                 subtitle: transaction['category'],
                                 amount: transaction['amount'].toString(),
                               );
@@ -126,19 +134,17 @@ class _TransactionsPageState extends State<TransactionsPage> {
               );
 
               if (success) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Transaction added successfully!')),
-                );
+                showSnackBar(context,
+                    localizations.translate("snackbarSuccessAddTransactions"),
+                    isSuccess: true);
                 fetchTransactions();
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Failed to add transaction.')),
-                );
+                showSnackBar(context,
+                    localizations.translate("snackbarFailedAddTransactions"),
+                    isSuccess: false);
               }
             } catch (e) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('An error occurred: $e')),
-              );
+              showSnackBar(context, 'An error occurred: $e', isSuccess: false);
             }
           }
         },
@@ -147,7 +153,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
             borderRadius: BorderRadius.circular(50),
             side: BorderSide(color: colorScheme.surface.withAlpha(50))),
         elevation: 10,
-        tooltip: 'Add Transaction',
+        tooltip: localizations.translate("AddTransaction-label-title"),
         child: Icon(Icons.add, color: colorScheme.onPrimary),
       ),
       bottomNavigationBar: CustomBottomNavBar(),

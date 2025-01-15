@@ -2,7 +2,6 @@ const { Transaction } = require('../models');
 const { Op, fn, col, literal } = require('sequelize');
 const sequelize = require('../config/db');
 
-
 exports.getReports = async (req, res) => {
     try {
         const income = await Transaction.sum('amount', {
@@ -21,26 +20,31 @@ exports.getReports = async (req, res) => {
     }
 };
 
-// Fetch income report by date
-// Fetch income report by date
+// Fetch income report (with optional date filter)
 exports.getIncomeReport = async (req, res) => {
     const { start, end } = req.query;
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    endDate.setUTCHours(23, 59, 59, 999); // Ensure the end date is the full day
-
-    console.log('Start Date:', startDate);
-    console.log('End Date:', endDate);
-
+    
     try {
-        const totalIncome = await Transaction.sum('amount', {
-            where: {
-                type: 'income',
-                date: {
-                    [Op.between]: [startDate, endDate],
+        let totalIncome;
+        
+        if (start && end) {
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            endDate.setUTCHours(23, 59, 59, 999); // Ensure the end date is the full day
+
+            totalIncome = await Transaction.sum('amount', {
+                where: {
+                    type: 'income',
+                    date: {
+                        [Op.between]: [startDate, endDate],
+                    },
                 },
-            },
-        });
+            });
+        } else {
+            totalIncome = await Transaction.sum('amount', {
+                where: { type: 'income' },
+            });
+        }
 
         res.json({ totalIncome: parseFloat(totalIncome) || 0.0 });
     } catch (error) {
@@ -48,25 +52,31 @@ exports.getIncomeReport = async (req, res) => {
     }
 };
 
-// Fetch expense report by date
+// Fetch expense report (with optional date filter)
 exports.getExpenseReport = async (req, res) => {
     const { start, end } = req.query;
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    endDate.setUTCHours(23, 59, 59, 999); // Ensure the end date is the full day
-
-    console.log('Start Date:', startDate);
-    console.log('End Date:', endDate);
-
+    
     try {
-        const totalExpense = await Transaction.sum('amount', {
-            where: {
-                type: 'expense',
-                date: {
-                    [Op.between]: [startDate, endDate],
+        let totalExpense;
+        
+        if (start && end) {
+            const startDate = new Date(start);
+            const endDate = new Date(end);
+            endDate.setUTCHours(23, 59, 59, 999); // Ensure the end date is the full day
+
+            totalExpense = await Transaction.sum('amount', {
+                where: {
+                    type: 'expense',
+                    date: {
+                        [Op.between]: [startDate, endDate],
+                    },
                 },
-            },
-        });
+            });
+        } else {
+            totalExpense = await Transaction.sum('amount', {
+                where: { type: 'expense' },
+            });
+        }
 
         res.json({ totalExpense: parseFloat(totalExpense) || 0.0 });
     } catch (error) {

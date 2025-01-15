@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fma/templates/AppLocalization.dart';
 
 class SpendingTrends extends StatelessWidget {
   const SpendingTrends({Key? key}) : super(key: key);
@@ -7,12 +8,13 @@ class SpendingTrends extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+    final localizations = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Spending Trends',
+          localizations.translate("SpendTrends-label-title"),
           style: textTheme.titleLarge?.copyWith(
             color: colorScheme.onBackground,
           ),

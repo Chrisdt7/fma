@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:fma/templates/AppLocalization.dart';
 import 'ChartUtils.dart';
 
 Widget buildEmptyState(
     BuildContext context, ColorScheme colorScheme, TextTheme textTheme) {
   return Center(
     child: Text(
-      'No Data Available',
+      AppLocalizations.of(context).translate("Chart-no-data"),
       style: textTheme.headlineMedium?.copyWith(color: colorScheme.primary),
     ),
   );

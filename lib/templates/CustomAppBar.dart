@@ -16,13 +16,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final appBarGradient =
         Theme.of(context).extension<GradientTheme>()?.appBarGradient;
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return AppBar(
       title: Text(
         title,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            ),
+        style: textTheme.titleLarge?.copyWith(
+          color: colorScheme.primary,
+        ),
       ),
       centerTitle: true,
       actions: [

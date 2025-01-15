@@ -1,14 +1,16 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:fma/services/ApiService.dart';
+import 'package:fma/templates/AppLocalization.dart';
 import 'package:fma/templates/Themes.dart';
 import 'package:flutter_feather_icons/flutter_feather_icons.dart';
 import 'package:fma/services/Helpers.dart';
 
 class LoginPage extends StatefulWidget {
   final VoidCallback toggleTheme;
+  final Function(String) changeLanguage;
 
-  const LoginPage({required this.toggleTheme});
+  const LoginPage({required this.toggleTheme, required this.changeLanguage});
 
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -42,11 +44,13 @@ class _LoginPageState extends State<LoginPage> {
 
   void _login() async {
     if (emailController.text.isEmpty) {
-      showSnackBar(context, 'Email is required');
+      showSnackBar(context,
+          AppLocalizations.of(context).translate("snackbarRequiredEmail"));
       return;
     }
     if (passwordController.text.isEmpty) {
-      showSnackBar(context, 'Password is required');
+      showSnackBar(context,
+          AppLocalizations.of(context).translate("snackbarRequiredPassword"));
       return;
     }
 
@@ -64,10 +68,13 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.pop(context);
 
     if (success) {
-      showSnackBar(context, 'Login successful!', isSuccess: true);
+      showSnackBar(context,
+          AppLocalizations.of(context).translate("snackbarSuccessLogin"),
+          isSuccess: true);
       Navigator.pushReplacementNamed(context, '/home');
     } else {
-      showSnackBar(context, 'Invalid credentials. Please try again.');
+      showSnackBar(context,
+          AppLocalizations.of(context).translate("snackbarFailedLogin"));
     }
   }
 
@@ -75,6 +82,8 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final gradientTheme = Theme.of(context).extension<AuthGradientTheme>()!;
     final colorScheme = Theme.of(context).colorScheme;
+    final localizations = AppLocalizations.of(context);
+    String currentLanguage = Localizations.localeOf(context).languageCode;
 
     return Theme(
         data: Theme.of(context).brightness == Brightness.dark
@@ -100,14 +109,6 @@ class _LoginPageState extends State<LoginPage> {
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  IconButton(
-                    onPressed: widget.toggleTheme,
-                    icon: Icon(
-                      Icons.lightbulb_sharp,
-                      size: 50,
-                      color: colorScheme.outlineVariant,
-                    ),
-                  ),
                   SizedBox(height: 20),
                   Container(
                     child: Padding(
@@ -131,12 +132,105 @@ class _LoginPageState extends State<LoginPage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              'Login',
-                              style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: colorScheme.onSurface,
+                            AppBar(
+                              backgroundColor: Colors.transparent,
+                              elevation: 0,
+                              automaticallyImplyLeading: false,
+                              flexibleSpace: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0),
+                                child: Stack(
+                                  children: [
+                                    Align(
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        localizations.translate('login-title'),
+                                        style: TextStyle(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.bold,
+                                          color: colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4.0),
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          border: Border.all(
+                                              color: colorScheme.primary),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize
+                                              .min, // Shrinks to fit the content
+                                          children: [
+                                            GestureDetector(
+                                              onTap: () {
+                                                widget.changeLanguage('en');
+                                              },
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 5,
+                                                        horizontal: 8),
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  'en',
+                                                  style: TextStyle(
+                                                    color: currentLanguage ==
+                                                            'en'
+                                                        ? colorScheme.onSurface
+                                                        : colorScheme.surface,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Text("/"),
+                                            GestureDetector(
+                                              onTap: () {
+                                                widget.changeLanguage('id');
+                                              },
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 5,
+                                                        horizontal: 8),
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  'id',
+                                                  style: TextStyle(
+                                                    color: currentLanguage ==
+                                                            'id'
+                                                        ? colorScheme.onSurface
+                                                        : colorScheme.surface,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: widget.toggleTheme,
+                                      icon: Icon(
+                                        Icons.lightbulb_sharp,
+                                        size: 30,
+                                        color: colorScheme.outlineVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                             SizedBox(height: 20),
@@ -150,7 +244,8 @@ class _LoginPageState extends State<LoginPage> {
                                     : colorScheme.onSurface,
                               ),
                               decoration: InputDecoration(
-                                labelText: 'Email',
+                                labelText:
+                                    localizations.translate("label-email"),
                                 filled: true,
                                 fillColor: colorScheme.surface,
                                 border: OutlineInputBorder(
@@ -165,11 +260,12 @@ class _LoginPageState extends State<LoginPage> {
                                         BorderRadius.all(Radius.circular(12))),
                                 floatingLabelStyle:
                                     TextStyle(color: colorScheme.tertiary),
-                                hintText: 'examples@gmail.com',
+                                hintText: localizations.translate("hint-email"),
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter your username';
+                                  return localizations
+                                      .translate("snackbarRequiredEmail");
                                 }
                                 return null;
                               },
@@ -185,7 +281,8 @@ class _LoginPageState extends State<LoginPage> {
                                     : colorScheme.onSurface,
                               ),
                               decoration: InputDecoration(
-                                labelText: 'Password',
+                                labelText:
+                                    localizations.translate("label-password"),
                                 filled: true,
                                 fillColor: colorScheme.surface,
                                 border: OutlineInputBorder(
@@ -200,7 +297,8 @@ class _LoginPageState extends State<LoginPage> {
                                         BorderRadius.all(Radius.circular(12))),
                                 floatingLabelStyle:
                                     TextStyle(color: colorScheme.tertiary),
-                                hintText: '••••••••',
+                                hintText:
+                                    localizations.translate("hint-password"),
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _isPasswordVisible
@@ -220,14 +318,16 @@ class _LoginPageState extends State<LoginPage> {
                               obscureText: !_isPasswordVisible,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter your password';
+                                  return localizations
+                                      .translate("snackbarRequiredPassword");
                                 }
                                 return null;
                               },
                             ),
                             SizedBox(height: 20),
                             ElevatedButton(
-                              child: Text('Login'),
+                              child:
+                                  Text(localizations.translate("login-title")),
                               onPressed: _login,
                               style: ElevatedButton.styleFrom(
                                 foregroundColor: colorScheme.primary,
@@ -244,7 +344,7 @@ class _LoginPageState extends State<LoginPage> {
                             SizedBox(height: 20),
                             RichText(
                               text: TextSpan(
-                                text: "Don't have an account? ",
+                                text: localizations.translate("text-1"),
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyMedium
@@ -254,7 +354,8 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                 children: [
                                   TextSpan(
-                                    text: 'Register',
+                                    text: localizations
+                                        .translate("register-title"),
                                     style: Theme.of(context)
                                         .textTheme
                                         .labelLarge
@@ -265,7 +366,7 @@ class _LoginPageState extends State<LoginPage> {
                                         ),
                                     recognizer: TapGestureRecognizer()
                                       ..onTap = () {
-                                        Navigator.pushNamed(
+                                        Navigator.popAndPushNamed(
                                             context, '/register');
                                       },
                                   ),

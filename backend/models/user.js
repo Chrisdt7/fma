@@ -24,6 +24,14 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: true,
     },
+    twoFactorToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
+    },
+    twoFactorExpiry: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
     isTwoFactorEnabled: {
         type: DataTypes.BOOLEAN,
         allowNull: false,

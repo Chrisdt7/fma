@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:fma/services/ApiService.dart';
+import 'package:fma/services/Helpers.dart';
+import 'package:fma/templates/AppLocalization.dart';
 import 'package:fma/widgets/transactions/AddTransactionDialog.dart';
 
 class QuickActions extends StatelessWidget {
-  const QuickActions({Key? key}) : super(key: key);
+  final Future<void> Function() fetchTransactions;
+
+  const QuickActions({Key? key, required this.fetchTransactions})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +18,7 @@ class QuickActions extends StatelessWidget {
         _buildQuickAction(
           context,
           Icons.add,
-          'Add\nTransaction',
+          AppLocalizations.of(context).translate("QuickAct-label-title-1"),
           onTap: () async {
             // Open AddTransactionDialog
             final result = await showDialog<Map<String, dynamic>>(
@@ -22,23 +28,45 @@ class QuickActions extends StatelessWidget {
               },
             );
 
-            if (result != null) {
-              // Process the result or display a message
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Transaction added successfully!')),
+            if (result != null && result.isNotEmpty) {
+              final apiService = ApiService();
+              final success = await apiService.addTransaction(
+                result['amount'],
+                result['category'],
+                result['type'],
+                result['date'],
               );
+              
+              await fetchTransactions();
+
+              if (success) {
+                showSnackBar(
+                    context,
+                    AppLocalizations.of(context)
+                        .translate("snackbarSuccessAddTransactions"),
+                    isSuccess: true);
+              } else {
+                showSnackBar(
+                    context,
+                    AppLocalizations.of(context)
+                        .translate("snackbarFailedAddTransactions"),
+                    isSuccess: false);
+              }
             }
           },
         ),
         _buildQuickAction(
           context,
           Icons.pie_chart,
-          'View\nReports',
+          AppLocalizations.of(context).translate("QuickAct-label-title-2"),
+          onTap: () {
+            Navigator.pushReplacementNamed(context, '/reports');
+          },
         ),
         _buildQuickAction(
           context,
           Icons.analytics,
-          'Analyze\nTrends',
+          AppLocalizations.of(context).translate("QuickAct-label-title-3"),
         ),
       ],
     );

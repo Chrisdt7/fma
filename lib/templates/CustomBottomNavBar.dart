@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fma/templates/AppLocalization.dart';
 import 'package:fma/templates/Themes.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
@@ -8,6 +9,7 @@ class CustomBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomNavBarGradient =
         Theme.of(context).extension<GradientTheme>()?.bottomNavBarGradient;
+    final localizations = AppLocalizations.of(context);
 
     return bottomNavBarGradient != null
         ? Container(
@@ -31,12 +33,16 @@ class CustomBottomNavBar extends StatelessWidget {
                     break;
                 }
               },
-              items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+              items: [
                 BottomNavigationBarItem(
-                    icon: Icon(Icons.receipt), label: 'Transaction'),
+                    icon: Icon(Icons.home),
+                    label: localizations.translate("home-title")),
                 BottomNavigationBarItem(
-                    icon: Icon(Icons.analytics), label: 'Report'),
+                    icon: Icon(Icons.receipt),
+                    label: localizations.translate("transactions-title")),
+                BottomNavigationBarItem(
+                    icon: Icon(Icons.analytics),
+                    label: localizations.translate("reports-title")),
               ],
             ),
           )

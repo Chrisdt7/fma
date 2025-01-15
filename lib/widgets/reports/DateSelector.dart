@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fma/templates/AppLocalization.dart';
 import 'package:intl/intl.dart';
 
 class DateSelector extends StatelessWidget {
@@ -30,16 +31,18 @@ class DateSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final locale = AppLocalizations.of(context).locale.languageCode;
     String dateText = selectedStartDate != null && selectedEndDate != null
-        ? "${DateFormat.yMMM().format(selectedStartDate!)} - ${DateFormat.yMMM().format(selectedEndDate!)}"
-        : "Select Date Range";
+        ? "${DateFormat.yMMM(locale).format(selectedStartDate!)} - ${DateFormat.yMMM().format(selectedEndDate!)}"
+        : AppLocalizations.of(context).translate("DateRange-label-title");
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         ElevatedButton(
           onPressed: () => _selectDateRange(context),
-          child: const Text('Select Date'),
+          child: Text(
+              AppLocalizations.of(context).translate("DateSelect-label-title")),
         ),
         Text(
           dateText,

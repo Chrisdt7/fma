@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fma/templates/AppLocalization.dart';
 
 class SearchBar extends StatelessWidget {
   const SearchBar({Key? key}) : super(key: key);
@@ -23,7 +24,8 @@ class SearchBar extends StatelessWidget {
         ),
         child: TextField(
           decoration: InputDecoration(
-            hintText: 'Search transactions',
+            hintText: AppLocalizations.of(context)
+                .translate("hint-search-transactions"),
             prefixIcon: const Icon(Icons.search),
             filled: true,
             fillColor: colorScheme.surface,

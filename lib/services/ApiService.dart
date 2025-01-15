@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiService {
-  final String baseUrl = 'http://192.168.203.52:5000'; // or Heroku URL
+  final String baseUrl = 'http://192.168.131.52:5000';
   final storage = FlutterSecureStorage();
 
   // ---------- USER ----------
@@ -59,7 +59,6 @@ class ApiService {
   }
 
   // Get User
-  // Get User - already includes all fields, ensure 'image' is handled correctly
   Future<Map<String, dynamic>?> getUser() async {
     try {
       String? token = await storage.read(key: 'token');
@@ -74,7 +73,7 @@ class ApiService {
       );
 
       // print('Response status code: ${response.statusCode}');
-      // print('Response body: ${response.body}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -160,11 +159,11 @@ class ApiService {
     }
   }
 
-  // 2FA Enable
-  Future<Map<String, dynamic>?> enableTwoFactorAuth() async {
+  // Enable 2FA
+  Future<Map<String, dynamic>?> enable2FA() async {
     try {
       String? token = await storage.read(key: 'token');
-      if (token == null) throw Exception('No token found');
+      if (token == null) throw Exception('Authentication token not found.');
 
       final response = await http.post(
         Uri.parse('$baseUrl/auth/enable-2fa'),
@@ -175,89 +174,100 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        // Typically returns QR code or secret
-        return data;
+        print("API Response: ${response.body}");
+        return jsonDecode(response.body);
       } else {
-        print('Error enabling 2FA: ${response.body}');
+        final errorData = jsonDecode(response.body);
+        print('Error enabling 2FA: ${errorData['error']}');
+        return {'error': errorData['error'] ?? 'Failed to enable 2FA.'};
       }
     } catch (e) {
-      print('Error: $e');
+      print('Error enabling 2FA: $e');
+      return {'error': 'An unexpected error occurred.'};
     }
-    return null;
   }
 
-  // 2FA Disable
-  Future<bool> disableTwoFactorAuth(String? token) async {
+  // Disable 2FA
+  Future<Map<String, dynamic>?> disable2FA() async {
     try {
-      String? tokenHeader = await storage.read(key: 'token');
-      if (tokenHeader == null) throw Exception('No token found');
+      String? authToken = await storage.read(key: 'token');
+      if (authToken == null) throw Exception('Authentication token not found.');
 
       final response = await http.post(
         Uri.parse('$baseUrl/auth/disable-2fa'),
         headers: {
-          'Authorization': 'Bearer $tokenHeader',
+          'Authorization': 'Bearer $authToken',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'token': token}), // Optional token verification
       );
 
       if (response.statusCode == 200) {
-        return true; // 2FA disabled successfully
+        return jsonDecode(response.body);
       } else {
-        print('Error disabling 2FA: ${response.body}');
+        final errorData = jsonDecode(response.body);
+        print('Error disabling 2FA: ${errorData['error']}');
+        return {'error': errorData['error'] ?? 'Failed to disable 2FA.'};
       }
-      return false;
     } catch (e) {
-      print('Error: $e');
-      return false;
+      print('Error disabling 2FA: $e');
+      return {'error': 'An unexpected error occurred.'};
     }
   }
 
-  Future<void> request2FAToken(String token) async {
-    String? tokenHeader = await storage.read(key: 'token');
-    if (tokenHeader == null) throw Exception('No token found');
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/auth/sendEmail2FA'),
-      headers: {
-        'Authorization': 'Bearer $tokenHeader',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({'token': token}),
-    );
-
-    if (response.statusCode == 200) {
-      print('2FA token sent to email.');
-    } else {
-      print('Failed to send 2FA token: ${response.body}');
-    }
-  }
-
-  // 2FA Verify
-  Future<bool> verifyTwoFactorAuth(String token) async {
+  // Send 2FA Email
+  Future<Map<String, dynamic>?> sendEmail2FA() async {
     try {
-      String? tokenHeader = await storage.read(key: 'token');
-      if (tokenHeader == null) throw Exception('No token found');
+      String? token = await storage.read(key: 'token');
+      if (token == null) throw Exception('Authentication token not found.');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/sendEmail-2fa'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print("API Response: ${response.body}");
+
+        return jsonDecode(response.body);
+      } else {
+        final errorData = jsonDecode(response.body);
+        print('Failed to send 2FA email: ${errorData['error']}');
+        return {'error': errorData['error'] ?? 'Failed to send 2FA email.'};
+      }
+    } catch (e) {
+      print('Error sending 2FA email: $e');
+      return {'error': 'An unexpected error occurred.'};
+    }
+  }
+
+  // Verify 2FA
+  Future<Map<String, dynamic>?> verify2FA(String code) async {
+    try {
+      String? token = await storage.read(key: 'token');
+      if (token == null) throw Exception('Authentication token not found.');
 
       final response = await http.post(
         Uri.parse('$baseUrl/auth/verify-2fa'),
         headers: {
-          'Authorization': 'Bearer $tokenHeader',
+          'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'token': token}),
+        body: jsonEncode({'code': code}),
       );
 
       if (response.statusCode == 200) {
-        return true; // Verification successful
+        return jsonDecode(response.body);
       } else {
-        print('Error verifying 2FA: ${response.body}');
+        final errorData = jsonDecode(response.body);
+        print('Error verifying 2FA code: ${errorData['error']}');
+        return {'error': errorData['error'] ?? 'Failed to verify 2FA code.'};
       }
-      return false;
     } catch (e) {
-      print('Error: $e');
-      return false;
+      print('Error verifying 2FA code: $e');
+      return {'error': 'An unexpected error occurred.'};
     }
   }
 
@@ -333,6 +343,34 @@ class ApiService {
     }
   }
 
+  Future<double> getAllIncomeReports() async {
+    try {
+      String? token = await storage.read(key: 'token');
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/reports/income'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // Ensure that the value is returned as a double
+        return (data['totalIncome'] ?? 0.0).toDouble();
+      } else {
+        throw Exception('Failed to fetch all income reports: ${response.body}');
+      }
+    } catch (e) {
+      print('Error: $e');
+      rethrow;
+    }
+  }
+
   // Fetch Expense Report
   Future<double> getExpenseReport(String startDate, String endDate) async {
     try {
@@ -362,11 +400,51 @@ class ApiService {
     }
   }
 
+  Future<double> getAllExpenseReports() async {
+    try {
+      String? token = await storage.read(key: 'token');
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/reports/expense'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // Ensure that the value is returned as a double
+        return (data['totalExpense'] ?? 0.0).toDouble();
+      } else {
+        throw Exception(
+            'Failed to fetch all expense reports: ${response.body}');
+      }
+    } catch (e) {
+      print('Error: $e');
+      rethrow;
+    }
+  }
+
   // Fetch Net Balance Report
   Future<double> getNetBalance(String startDate, String endDate) async {
     try {
       final income = await getIncomeReport(startDate, endDate);
       final expense = await getExpenseReport(startDate, endDate);
+      return income - expense;
+    } catch (e) {
+      print('Error: $e');
+      rethrow;
+    }
+  }
+
+  Future<double> getAllNetBalances() async {
+    try {
+      final income = await getAllIncomeReports();
+      final expense = await getAllExpenseReports();
       return income - expense;
     } catch (e) {
       print('Error: $e');
@@ -403,6 +481,40 @@ class ApiService {
         }).toList();
       } else {
         throw Exception('Failed to fetch chart data: ${response.body}');
+      }
+    } catch (e) {
+      print('Error: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getAllChartData() async {
+    try {
+      String? token = await storage.read(key: 'token');
+      if (token == null) throw Exception('No token found');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/reports/chart-data'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('All Chart Data API Response: $data');
+        var chartData =
+            List<Map<String, dynamic>>.from(data['chartData'] ?? []);
+        return chartData.map((item) {
+          return {
+            'date': item['date'],
+            'income': (item['income'] ?? 0.0).toDouble(),
+            'expense': (item['expense'] ?? 0.0).toDouble(),
+          };
+        }).toList();
+      } else {
+        throw Exception('Failed to fetch all chart data: ${response.body}');
       }
     } catch (e) {
       print('Error: $e');

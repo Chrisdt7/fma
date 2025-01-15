@@ -1,40 +1,52 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const { User } = require('../models');
 const upload = require('../middleware/uploadMiddleware');
-const speakeasy = require('speakeasy');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-exports.verifyTwoFactorAuth = async (req, res) => {
-    const { token } = req.body;
-
+exports.verify2FA = async (req, res) => {
     try {
         const user = await User.findByPk(req.userId);
 
-        if (!user || !user.isTwoFactorEnabled) {
-            return res.status(400).json({ error: 'Two-factor authentication is not enabled.' });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found.' });
         }
 
-        const isVerified = speakeasy.totp.verify({
-            secret: user.twoFactorSecret,
-            encoding: 'base32',
-            token,
-            window: 1,
-        });
-
-        if (!isVerified) {
-            return res.status(401).json({ error: 'Invalid token.' });
+        if (!user.twoFactorToken || !user.twoFactorExpiry) {
+            return res.status(400).json({ success: false, message: '2FA token not generated or expired.' });
         }
 
-        res.json({ message: 'Token verified successfully.' });
+        const { code } = req.body;
+        if (!code) {
+            return res.status(400).json({ success: false, message: 'Verification code is required.' });
+        }
+
+        // Check if the token has expired
+        if (user.twoFactorExpiry < Date.now()) {
+            return res.status(400).json({ success: false, message: '2FA token has expired.' });
+        }
+
+        // Verify the token
+        const hashedToken = crypto.createHash('sha256').update(code).digest('hex');
+        if (hashedToken !== user.twoFactorToken) {
+            return res.status(400).json({ success: false, message: 'Invalid 2FA token.' });
+        }
+
+        // Clear the token and expiry
+        user.twoFactorToken = null;
+        user.twoFactorExpiry = null;
+        await user.save();
+
+        res.status(200).json({ success: true, message: '2FA verified successfully.' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to verify 2FA token.' });
+        console.error('Error verifying 2FA token:', error.message);
+        res.status(500).json({ success: false, message: 'Failed to verify 2FA token.' });
     }
 };
 
-exports.enableTwoFactorAuth = async (req, res) => {
+exports.enable2FA = async (req, res) => {
     try {
         const user = await User.findByPk(req.userId);
 
@@ -42,23 +54,24 @@ exports.enableTwoFactorAuth = async (req, res) => {
             return res.status(404).json({ error: 'User not found.' });
         }
 
-        // Generate a secret for the user
-        const secret = speakeasy.generateSecret();
-        user.twoFactorSecret = secret.base32;
+        if (user.isTwoFactorEnabled) {
+            return res.status(400).json({ error: 'Two-factor authentication is already enabled.' });
+        }
+
         user.isTwoFactorEnabled = true;
         await user.save();
 
-        res.json({
-            message: 'Two-factor authentication enabled.',
-            secret: secret.otpauth_url, // Use this to generate a QR code
+        res.status(200).json({
+            message: 'Two-factor authentication enabled successfully.',
+            user: { isTwoFactorEnabled: user.isTwoFactorEnabled },
         });
     } catch (error) {
-        console.error(error);
+        console.error('Error enabling 2FA:', error);
         res.status(500).json({ error: 'Failed to enable 2FA.' });
     }
 };
 
-exports.disableTwoFactorAuth = async (req, res) => {
+exports.disable2FA = async (req, res) => {
     try {
         const user = await User.findByPk(req.userId);
 
@@ -70,34 +83,22 @@ exports.disableTwoFactorAuth = async (req, res) => {
             return res.status(400).json({ error: 'Two-factor authentication is not enabled.' });
         }
 
-        // Verify 2FA token if necessary
-        const { token } = req.body;
-        if (token) {
-            const isVerified = speakeasy.totp.verify({
-                secret: user.twoFactorSecret,
-                encoding: 'base32',
-                token,
-                window: 1, // Allow a small window for verification
-            });
-
-            if (!isVerified) {
-                return res.status(401).json({ error: 'Invalid token.' });
-            }
-        }
-
-        // Disable 2FA
+        // Directly disable 2FA without verifying the token
         user.twoFactorSecret = null;
         user.isTwoFactorEnabled = false;
         await user.save();
 
-        res.json({ message: 'Two-factor authentication disabled successfully.' });
+        res.status(200).json({
+            message: 'Two-factor authentication disabled successfully.',
+            user: { id: user.id, isTwoFactorEnabled: user.isTwoFactorEnabled },
+        });
     } catch (error) {
-        console.error(error);
+        console.error('Error disabling 2FA:', error);
         res.status(500).json({ error: 'Failed to disable 2FA.' });
     }
 };
 
-exports.sendEmail2FAToken = async (req, res) => {
+exports.sendEmail2FA = async (req, res) => {
     try {
         const user = await User.findByPk(req.userId);
 
@@ -105,33 +106,43 @@ exports.sendEmail2FAToken = async (req, res) => {
             return res.status(404).json({ error: 'User not found.' });
         }
 
-        // Generate a random 6-digit token
-        const token = Math.floor(100000 + Math.random() * 900000).toString();
+        const token2FA = crypto.randomInt(100000, 999999).toString();
+        const hashedToken = crypto.createHash('sha256').update(token2FA).digest('hex');
 
-        // Store token and expiry in the database (valid for 10 minutes)
-        user.twoFactorToken = token;
-        user.twoFactorExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes from now
+        // Store the hashed token and expiry in the database (valid for 10 minutes)
+        user.twoFactorToken = hashedToken;
+        user.twoFactorExpiry = Date.now() + 10 * 60 * 1000; // 10 minutes
         await user.save();
 
-        // Send token via email
         const transporter = nodemailer.createTransport({
-            service: 'gmail',
+            host: process.env.EMAIL_HOST,
+            port: parseInt(process.env.EMAIL_PORT, 10),
+            secure: process.env.EMAIL_SECURE === 'true',
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS,
             },
         });
 
-        await transporter.sendMail({
+        // Verify transporter
+        await transporter.verify();
+
+        // Send email
+        const mailOptions = {
             from: process.env.EMAIL_USER,
             to: user.email,
             subject: 'Your 2FA Code',
-            text: `Your verification code is: ${token}`,
-        });
+            text: `Your verification code is: ${token2FA}`,
+        };
 
-        res.json({ message: '2FA token sent to your email.' });
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({
+            message: '2FA token sent to your email.',
+            expiresIn: 10 * 60, // seconds
+        });
     } catch (error) {
-        console.error(error);
+        console.error('Error sending 2FA email:', error);
         res.status(500).json({ error: 'Failed to send 2FA token.' });
     }
 };
@@ -208,7 +219,6 @@ exports.register = async (req, res) => {
     }
 };
 
-
 exports.login = async (req, res) => {
     const { email, password } = req.body;
     const user = await User.findOne({ where: { email } });
@@ -218,13 +228,14 @@ exports.login = async (req, res) => {
     }
 
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
-    res.json({ token });
+    
+    res.json({ token, is2FAEnabled: user.isTwoFactorEnabled });
 };
 
 exports.getUser = async (req, res) => {
     try {
         const user = await User.findByPk(req.userId, {
-            attributes: ['id', 'name', 'email', 'image'],
+            attributes: ['id', 'name', 'email', 'image', 'isTwoFactorEnabled'],
         });
 
         // console.log('User:', user)

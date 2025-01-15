@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:fma/services/ApiService.dart';
 import 'package:fma/services/AuthService.dart';
 import 'package:fma/services/Helpers.dart';
+import 'package:fma/templates/AppLocalization.dart';
 import 'package:fma/templates/CustomAppBar.dart';
 import 'package:fma/templates/Themes.dart';
 import 'package:fma/widgets/profile/ChangePasswordDialog.dart';
 import 'package:fma/widgets/profile/EditProfileDialog.dart';
+import 'package:fma/widgets/profile/TwoFactorToggle.dart';
 
 class ProfilePage extends StatefulWidget {
   final VoidCallback toggleTheme;
+  final Function(String) changeLanguage;
 
-  const ProfilePage({Key? key, required this.toggleTheme}) : super(key: key);
+  const ProfilePage(
+      {Key? key, required this.toggleTheme, required this.changeLanguage})
+      : super(key: key);
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -19,6 +24,8 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, dynamic>? user;
   bool isLoading = true;
+  bool is2FAEnabled = false;
+  String currentLanguage = 'en';
 
   final FocusNode nameFocusNode = FocusNode();
   final FocusNode emailFocusNode = FocusNode();
@@ -48,16 +55,19 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _fetchUser() async {
-    final data = await ApiService().getUser();
-    if (data != null) {
+    try {
+      final data = await ApiService().getUser();
       setState(() {
         user = data;
+        is2FAEnabled = user?['isTwoFactorEnabled'] ?? false;
         isLoading = false;
       });
-    } else {
+    } catch (e) {
       setState(() {
         isLoading = false;
       });
+      showSnackBar(
+          context, AppLocalizations.of(context).translate("snackbarFailedGet"));
     }
   }
 
@@ -65,10 +75,11 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     final gradientTheme = Theme.of(context).extension<GradientTheme>()!;
     final colorScheme = Theme.of(context).colorScheme;
+    final localizations = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: CustomAppBar(
-        title: 'Profile',
+        title: localizations.translate("profile-title"),
         toggleTheme: widget.toggleTheme,
         showProfileIcon: false,
       ),
@@ -85,6 +96,14 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildLanguageButton('en'),
+                          const SizedBox(width: 16),
+                          _buildLanguageButton('id'),
+                        ],
+                      ),
                       Center(
                         child: FutureBuilder(
                           future: preloadAssetImage(context, user?['image']),
@@ -160,7 +179,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 32),
                       Text(
-                        'Account Details',
+                        localizations.translate("AccountDetails-label-title"),
                         style: Theme.of(context)
                             .textTheme
                             .headlineMedium
@@ -205,10 +224,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
-                                    Icon(Icons.edit),
-                                    SizedBox(width: 8),
-                                    Text('Edit Profile'),
+                                  children: [
+                                    const Icon(Icons.edit),
+                                    const SizedBox(width: 8),
+                                    Text(localizations
+                                        .translate("EditProfile-label-title")),
                                   ],
                                 ),
                               ),
@@ -230,10 +250,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
-                                    Icon(Icons.lock),
-                                    SizedBox(width: 8),
-                                    Text('Change Password'),
+                                  children: [
+                                    const Icon(Icons.lock),
+                                    const SizedBox(width: 8),
+                                    Text(localizations.translate(
+                                        "ChangePassword-label-title")),
                                   ],
                                 ),
                               ),
@@ -251,10 +272,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
-                                    Icon(Icons.logout),
-                                    SizedBox(width: 8),
-                                    Text('Logout'),
+                                  children: [
+                                    const Icon(Icons.logout),
+                                    const SizedBox(width: 8),
+                                    Text(localizations
+                                        .translate("Logout-label-title")),
                                   ],
                                 ),
                               ),
@@ -262,11 +284,35 @@ class _ProfilePageState extends State<ProfilePage> {
                           ],
                         ),
                       ),
+                      TwoFactorToggle(
+                        is2FAEnabled: is2FAEnabled,
+                        onToggle: (value) {
+                          setState(() {
+                            is2FAEnabled = value;
+                            user?['isTwoFactorEnabled'] = value;
+                          });
+                        },
+                      ),
                     ],
                   ),
                 ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLanguageButton(String languageCode) {
+    return ElevatedButton(
+      onPressed: () {
+        setState(() {
+          currentLanguage = languageCode;
+          widget.changeLanguage(languageCode);
+        });
+      },
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      ),
+      child: Text(languageCode.toUpperCase()), // Display the language code
     );
   }
 }
